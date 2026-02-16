@@ -4,7 +4,7 @@
   "description": "Developer-first API testing, mocking, and documentation CLI",
   "main": "src/index.js",
   "bin": {
-    "mpx-api": "./bin/mpx-api.js"
+    "mpx-api": "bin/mpx-api.js"
   },
   "keywords": [
     "api",
@@ -22,7 +22,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mesaplexdev/mpx-api.git"
+    "url": "git+https://github.com/mesaplexdev/mpx-api.git"
   },
   "bugs": {
     "url": "https://github.com/mesaplexdev/mpx-api/issues"
