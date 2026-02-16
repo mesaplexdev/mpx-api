@@ -1,0 +1,35 @@
+name: GitHub API Collection
+description: Example collection for GitHub API with request chaining
+baseUrl: https://api.github.com
+
+requests:
+  - name: get-user
+    method: GET
+    url: /users/octocat
+    headers:
+      Accept: application/vnd.github+json
+      User-Agent: mpx-api
+    assert:
+      status: 200
+      body.login: octocat
+      body.type: User
+
+  - name: get-repos
+    method: GET
+    url: /users/{{get-user.response.body.login}}/repos
+    headers:
+      Accept: application/vnd.github+json
+      User-Agent: mpx-api
+    assert:
+      status: 200
+      body.length: { gt: 0 }
+
+  - name: get-first-repo
+    method: GET
+    url: "{{get-repos.response.body[0].url}}"
+    headers:
+      Accept: application/vnd.github+json
+      User-Agent: mpx-api
+    assert:
+      status: 200
+      body.owner.login: octocat
