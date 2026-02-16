@@ -3,8 +3,34 @@ import { highlight } from 'cli-highlight';
 
 const MAX_BODY_SIZE = 50 * 1024; // 50KB max for terminal display
 
+export function formatResponseJSON(response, request = {}) {
+  return JSON.stringify({
+    request: {
+      method: request.method || response.method,
+      url: request.url || response.url,
+      headers: request.headers || {},
+      body: request.body || null
+    },
+    response: {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      body: response.body,
+      rawBody: response.rawBody,
+      responseTime: response.responseTime,
+      size: response.size
+    }
+  }, null, 2);
+}
+
 export function formatResponse(response, options = {}) {
-  const { verbose = false, quiet = false } = options;
+  const { verbose = false, quiet = false, jsonOutput = false } = options;
+  
+  // Handle JSON output mode
+  if (jsonOutput) {
+    console.log(formatResponseJSON(response, options.request || {}));
+    return;
+  }
   
   if (quiet) {
     // Only output body

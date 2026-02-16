@@ -182,6 +182,134 @@ mpx-api history -n 50
 
 Cookies are automatically saved and sent with subsequent requests. Cookie jar is stored at `~/.mpx-api/cookies.json`.
 
+## AI Agent Usage 🤖
+
+**mpx-api is AI-native!** Every command supports structured JSON output, schema discovery, and MCP (Model Context Protocol) integration for seamless AI agent automation.
+
+### JSON Output
+
+Add `--json` to any command for machine-readable output:
+
+```bash
+# HTTP request with JSON output
+mpx-api get https://api.github.com/users/octocat --json
+
+# Output structure
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/users/octocat",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "statusText": "OK",
+    "headers": { "content-type": "application/json" },
+    "body": { "login": "octocat", ... },
+    "rawBody": "...",
+    "responseTime": 145,
+    "size": 1234
+  }
+}
+```
+
+### Schema Discovery
+
+AI agents can discover all available commands, flags, and output formats:
+
+```bash
+mpx-api --schema
+```
+
+Returns a complete JSON schema describing:
+- All commands and subcommands
+- Available flags and their types
+- Input/output schemas
+- Usage examples
+- Exit codes
+
+Perfect for dynamic tool discovery by AI assistants!
+
+### MCP Server Mode
+
+Start mpx-api as an MCP (Model Context Protocol) server for AI agent integration:
+
+```bash
+mpx-api mcp
+```
+
+Add to your MCP client configuration (e.g., Claude Desktop, Cline):
+
+```json
+{
+  "mcpServers": {
+    "mpx-api": {
+      "command": "npx",
+      "args": ["mpx-api", "mcp"]
+    }
+  }
+}
+```
+
+**Available MCP tools:**
+
+- `http_request` - Send HTTP requests with full control over method, headers, body
+- `get_schema` - Get the complete tool schema for dynamic discovery
+
+**Example MCP usage:**
+
+AI agents can now make API requests on your behalf:
+- "Make a GET request to https://api.github.com/users/octocat"
+- "POST to https://api.example.com/users with JSON body {name: 'Alice'}"
+- "What commands does mpx-api support?" (via get_schema)
+
+### Quiet Mode
+
+Suppress non-essential output with `--quiet` or `-q`:
+
+```bash
+mpx-api get https://api.example.com/data --quiet --json
+```
+
+Perfect for scripting and automation where you only want the result data.
+
+### Composability
+
+All commands are designed for Unix-style composition:
+
+```bash
+# Pipe output to jq
+mpx-api get https://api.github.com/users/octocat --json | jq '.response.body.login'
+
+# Use in scripts
+STATUS=$(mpx-api get https://api.example.com/health --json | jq -r '.response.status')
+if [ "$STATUS" -eq 200 ]; then
+  echo "API is healthy"
+fi
+
+# Batch processing
+cat urls.txt | while read url; do
+  mpx-api get "$url" --json >> results.jsonl
+done
+```
+
+### Exit Codes
+
+Predictable exit codes for automation:
+
+- `0` - Success (2xx or 3xx HTTP status)
+- `1` - Request failed or 4xx/5xx HTTP status
+
+```bash
+# Check if request succeeded
+if mpx-api get https://api.example.com/endpoint --quiet; then
+  echo "Success!"
+else
+  echo "Request failed"
+fi
+```
+
 ## Pro Features 💎
 
 Upgrade to **mpx-api Pro** ($12/mo) for advanced features:
