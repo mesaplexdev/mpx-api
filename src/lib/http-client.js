@@ -38,9 +38,17 @@ export class HttpClient {
   async request(method, url, options = {}) {
     const startTime = Date.now();
     
+    // Set default User-Agent, allow override via options.headers
+    const defaultHeaders = {
+      'user-agent': 'mpx-api/1.0.1',
+    };
+    
+    // Merge headers, with user headers taking precedence
+    const headers = { ...defaultHeaders, ...(options.headers || {}) };
+    
     const requestOptions = {
       method: method.toUpperCase(),
-      headers: options.headers || {},
+      headers,
       body: options.body,
     };
     
