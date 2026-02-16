@@ -1,0 +1,52 @@
+name: JSONPlaceholder API Tests
+description: Example collection testing JSONPlaceholder API
+baseUrl: https://jsonplaceholder.typicode.com
+
+requests:
+  - name: Get all users
+    method: GET
+    url: /users
+    assert:
+      status: 200
+      body.length: { gt: 0 }
+      headers.content-type: application/json
+      responseTime: { lt: 2000 }
+
+  - name: Get specific user
+    method: GET
+    url: /users/1
+    assert:
+      status: 200
+      body.id: 1
+      body.name: { exists: true }
+      body.email: { exists: true }
+
+  - name: Create new post
+    method: POST
+    url: /posts
+    json:
+      title: Test Post
+      body: This is a test post created by mpx-api
+      userId: 1
+    assert:
+      status: 201
+      body.title: Test Post
+      body.userId: 1
+
+  - name: Update post
+    method: PUT
+    url: /posts/1
+    json:
+      id: 1
+      title: Updated Title
+      body: Updated content
+      userId: 1
+    assert:
+      status: 200
+      body.title: Updated Title
+
+  - name: Delete post
+    method: DELETE
+    url: /posts/1
+    assert:
+      status: 200

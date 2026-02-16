@@ -1,0 +1,10 @@
+node_modules/
+.mpx-api/
+*.log
+npm-debug.log*
+.DS_Store
+.env
+.env.local
+dist/
+coverage/
+.nyc_output/
