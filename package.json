@@ -1,6 +1,6 @@
 {
   "name": "mpx-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Developer-first API testing, mocking, and documentation CLI",
   "main": "src/index.js",
   "bin": {
