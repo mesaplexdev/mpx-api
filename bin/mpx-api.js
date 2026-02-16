@@ -15,6 +15,10 @@ import { registerHistoryCommand } from '../src/commands/history.js';
 import { registerLoadCommand } from '../src/commands/load.js';
 import { registerDocsCommand } from '../src/commands/docs.js';
 
+// AI-native features
+import { getSchema } from '../src/schema.js';
+import { startMCPServer } from '../src/mcp.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -22,10 +26,19 @@ const pkg = JSON.parse(
   readFileSync(join(__dirname, '../package.json'), 'utf8')
 );
 
+// Handle --schema flag early (before commander parsing)
+if (process.argv.includes('--schema')) {
+  console.log(JSON.stringify(getSchema(), null, 2));
+  process.exit(0);
+}
+
 program
   .name('mpx-api')
   .description('Developer-first API testing, mocking, and documentation CLI')
-  .version(pkg.version);
+  .version(pkg.version)
+  .option('--json', 'Output structured JSON (machine-readable)')
+  .option('--quiet, -q', 'Suppress non-essential output')
+  .option('--schema', 'Output JSON schema describing all commands and flags');
 
 // Register HTTP method commands (get, post, put, patch, delete, head, options)
 registerRequestCommands(program);
@@ -48,5 +61,18 @@ registerHistoryCommand(program);
 // Register Pro commands (gracefully handle unlicensed)
 registerLoadCommand(program);
 registerDocsCommand(program);
+
+// MCP subcommand
+program
+  .command('mcp')
+  .description('Start MCP (Model Context Protocol) stdio server')
+  .action(async () => {
+    try {
+      await startMCPServer();
+    } catch (err) {
+      console.error(JSON.stringify({ error: err.message, code: 'ERR_MCP_START' }));
+      process.exit(1);
+    }
+  });
 
 program.parse();

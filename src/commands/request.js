@@ -17,8 +17,13 @@ export function registerRequestCommands(program) {
       .option('--no-follow', 'Do not follow redirects')
       .option('--no-verify', 'Skip SSL certificate verification')
       .option('--timeout <ms>', 'Request timeout in milliseconds', '30000')
-      .action(async (url, options) => {
+      .action(async (url, options, command) => {
         try {
+          // Get global options
+          const globalOpts = command.optsWithGlobals();
+          const jsonOutput = globalOpts.json || false;
+          const quiet = options.quiet || globalOpts.quiet || false;
+
           const client = new HttpClient({
             followRedirects: options.follow,
             verifySsl: options.verify,
@@ -34,7 +39,11 @@ export function registerRequestCommands(program) {
             try {
               requestOptions.json = JSON.parse(options.json);
             } catch (err) {
-              formatError(new Error(`Invalid JSON: ${err.message}`));
+              if (jsonOutput) {
+                console.log(JSON.stringify({ error: `Invalid JSON: ${err.message}` }));
+              } else {
+                formatError(new Error(`Invalid JSON: ${err.message}`));
+              }
               process.exit(1);
             }
           } else if (options.data) {
@@ -57,7 +66,14 @@ export function registerRequestCommands(program) {
           // Format and display response
           formatResponse(response, {
             verbose: options.verbose,
-            quiet: options.quiet,
+            quiet: quiet,
+            jsonOutput: jsonOutput,
+            request: {
+              method: method.toUpperCase(),
+              url,
+              headers: requestOptions.headers,
+              body: requestOptions.json || requestOptions.body,
+            }
           });
 
           // Exit with non-zero code for 4xx/5xx errors
@@ -65,7 +81,12 @@ export function registerRequestCommands(program) {
             process.exit(1);
           }
         } catch (err) {
-          formatError(err);
+          const globalOpts = command.optsWithGlobals();
+          if (globalOpts.json) {
+            console.log(JSON.stringify({ error: err.message, code: err.code || 'ERR_REQUEST' }));
+          } else {
+            formatError(err);
+          }
           process.exit(1);
         }
       });
