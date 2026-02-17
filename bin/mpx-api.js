@@ -36,9 +36,10 @@ program
   .name('mpx-api')
   .description('Developer-first API testing, mocking, and documentation CLI')
   .version(pkg.version)
-  .option('--json', 'Output structured JSON (machine-readable)')
-  .option('--quiet, -q', 'Suppress non-essential output')
-  .option('--schema', 'Output JSON schema describing all commands and flags');
+  .enablePositionalOptions()
+  .passThroughOptions()
+  .option('-o, --output <format>', 'Output format: json for structured JSON (machine-readable)')
+  .option('-q, --quiet', 'Suppress non-essential output');
 
 // Register HTTP method commands (get, post, put, patch, delete, head, options)
 registerRequestCommands(program);

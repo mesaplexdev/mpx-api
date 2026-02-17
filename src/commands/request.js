@@ -17,11 +17,12 @@ export function registerRequestCommands(program) {
       .option('--no-follow', 'Do not follow redirects')
       .option('--no-verify', 'Skip SSL certificate verification')
       .option('--timeout <ms>', 'Request timeout in milliseconds', '30000')
+      .option('-o, --output <format>', 'Output format (json)')
       .action(async (url, options, command) => {
         try {
           // Get global options
           const globalOpts = command.optsWithGlobals();
-          const jsonOutput = globalOpts.json || false;
+          const jsonOutput = options.output === 'json' || globalOpts.output === 'json';
           const quiet = options.quiet || globalOpts.quiet || false;
 
           const client = new HttpClient({
@@ -82,7 +83,7 @@ export function registerRequestCommands(program) {
           }
         } catch (err) {
           const globalOpts = command.optsWithGlobals();
-          if (globalOpts.json) {
+          if (options.output === 'json' || globalOpts.output === 'json') {
             console.log(JSON.stringify({ error: err.message, code: err.code || 'ERR_REQUEST' }));
           } else {
             formatError(err);

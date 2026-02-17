@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { parse, stringify } from 'yaml';
 import { ensureLocalDir } from '../lib/config.js';
-import { formatSuccess, formatError, formatInfo } from '../lib/output.js';
+import { formatSuccess, formatError, formatInfo, formatWarning } from '../lib/output.js';
 import { runCollection } from '../lib/collection-runner.js';
 import { formatTestResults } from '../lib/output.js';
 import { join } from 'path';
@@ -95,7 +95,8 @@ export function registerCollectionCommands(program) {
     .description('Run a collection')
     .option('-e, --env <name>', 'Environment to use')
     .option('--base-url <url>', 'Override base URL')
-    .action(async (file, options) => {
+    .option('--json', 'Output results as JSON')
+    .action(async (file, options, command) => {
       try {
         const collectionPath = file || join('.mpx-api', 'collection.yaml');
         
@@ -123,9 +124,17 @@ export function registerCollectionCommands(program) {
         
         const results = await runCollection(collection, { env, baseUrl });
         
-        const allPassed = formatTestResults(results);
+        const globalOpts = command.optsWithGlobals();
+        const jsonOutput = options.json || globalOpts.output === 'json';
         
-        process.exit(allPassed ? 0 : 1);
+        if (jsonOutput) {
+          console.log(JSON.stringify(results, null, 2));
+          const allPassed = results.every(r => r.passed);
+          process.exit(allPassed ? 0 : 1);
+        } else {
+          const allPassed = formatTestResults(results);
+          process.exit(allPassed ? 0 : 1);
+        }
       } catch (err) {
         formatError(err);
         process.exit(1);
@@ -170,6 +179,4 @@ export function registerCollectionCommands(program) {
     });
 }
 
-function formatWarning(message) {
-  console.log(chalk.yellow('⚠'), message);
-}
+// formatWarning imported from output.js

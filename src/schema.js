@@ -69,16 +69,11 @@ export function getSchema() {
             type: 'number',
             default: 30000,
             description: 'Request timeout in milliseconds'
-          },
-          '--json-output': {
-            type: 'boolean',
-            default: false,
-            description: 'Output results as structured JSON'
           }
         },
         output: {
           json: {
-            description: 'Structured response data when --json-output is used',
+            description: 'Structured response data when --output json is used',
             schema: {
               type: 'object',
               properties: {
@@ -123,9 +118,9 @@ export function getSchema() {
           1: 'Request error or 4xx/5xx status'
         },
         examples: [
-          { command: 'mpx-api get https://api.example.com/users --json-output', description: 'GET request with JSON output' },
-          { command: 'mpx-api post https://api.example.com/users -j \'{"name":"John"}\' --json-output', description: 'POST JSON data with structured output' },
-          { command: 'mpx-api get https://api.example.com/data -H "Authorization: Bearer token" --json-output', description: 'GET with custom headers' }
+          { command: 'mpx-api get https://api.example.com/users --output json', description: 'GET request with JSON output' },
+          { command: 'mpx-api post https://api.example.com/users -j \'{"name":"John"}\' --output json', description: 'POST JSON data with structured output' },
+          { command: 'mpx-api get https://api.example.com/data -H "Authorization: Bearer token"', description: 'GET with custom headers' }
         ]
       },
       collection: {
@@ -165,7 +160,7 @@ export function getSchema() {
             flags: {
               '-e, --env': { type: 'string', description: 'Environment name to use' },
               '--base-url': { type: 'string', description: 'Override base URL' },
-              '--json-output': { type: 'boolean', description: 'Output results as JSON' }
+              '--json': { type: 'boolean', description: 'Output results as JSON' }
             }
           },
           list: {
@@ -177,32 +172,24 @@ export function getSchema() {
       env: {
         description: 'Manage environments',
         subcommands: {
-          list: {
-            usage: 'mpx-api env list',
-            description: 'List all environments',
-            flags: {
-              '--json-output': { type: 'boolean', description: 'Output as JSON' }
-            }
+          init: {
+            usage: 'mpx-api env init',
+            description: 'Initialize environments directory with dev, staging, production'
           },
           set: {
-            usage: 'mpx-api env set <name> <key> <value>',
-            description: 'Set an environment variable',
+            usage: 'mpx-api env set <environment> <variable>',
+            description: 'Set an environment variable (KEY=value format)',
             arguments: {
-              name: { type: 'string', required: true, description: 'Environment name' },
-              key: { type: 'string', required: true, description: 'Variable key' },
-              value: { type: 'string', required: true, description: 'Variable value' }
+              environment: { type: 'string', required: true, description: 'Environment name' },
+              variable: { type: 'string', required: true, description: 'Variable in KEY=value format' }
             }
           },
-          get: {
-            usage: 'mpx-api env get <name> <key>',
-            description: 'Get an environment variable',
-            flags: {
-              '--json-output': { type: 'boolean', description: 'Output as JSON' }
+          list: {
+            usage: 'mpx-api env list [environment]',
+            description: 'List all environments or variables in a specific environment',
+            arguments: {
+              environment: { type: 'string', required: false, description: 'Environment name (optional)' }
             }
-          },
-          delete: {
-            usage: 'mpx-api env delete <name>',
-            description: 'Delete an environment'
           }
         }
       },
@@ -221,11 +208,11 @@ export function getSchema() {
         description: 'Run API tests',
         usage: 'mpx-api test <file> [options]',
         arguments: {
-          file: { type: 'string', required: true, description: 'Test file to run' }
+          file: { type: 'string', required: false, description: 'Test file to run (default: .mpx-api/collection.yaml)' }
         },
         flags: {
           '-e, --env': { type: 'string', description: 'Environment name' },
-          '--json-output': { type: 'boolean', description: 'Output results as JSON' }
+          '--json': { type: 'boolean', description: 'Output results as JSON' }
         }
       },
       history: {
@@ -233,7 +220,7 @@ export function getSchema() {
         usage: 'mpx-api history [options]',
         flags: {
           '-n, --limit': { type: 'number', default: 10, description: 'Number of entries to show' },
-          '--json-output': { type: 'boolean', description: 'Output as JSON' }
+          '--clear': { type: 'boolean', description: 'Clear history' }
         }
       },
       load: {
@@ -243,9 +230,10 @@ export function getSchema() {
           url: { type: 'string', required: true, description: 'Target URL' }
         },
         flags: {
-          '-c, --concurrency': { type: 'number', default: 10, description: 'Concurrent requests' },
-          '-n, --requests': { type: 'number', default: 100, description: 'Total requests' },
-          '--json-output': { type: 'boolean', description: 'Output results as JSON' }
+          '--rps': { type: 'number', default: 10, description: 'Requests per second' },
+          '-d, --duration': { type: 'number', default: 10, description: 'Test duration in seconds' },
+          '-H, --header': { type: 'array', description: 'Add request headers' },
+          '--method': { type: 'string', default: 'GET', description: 'HTTP method' }
         }
       },
       docs: {
@@ -268,12 +256,11 @@ export function getSchema() {
       }
     },
     globalFlags: {
-      '--json-output': {
-        type: 'boolean',
-        default: false,
-        description: 'Output structured JSON for machine consumption'
+      '-o, --output': {
+        type: 'string',
+        description: 'Output format: "json" for structured JSON for machine consumption'
       },
-      '--quiet': {
+      '-q, --quiet': {
         type: 'boolean',
         default: false,
         description: 'Suppress non-essential output'

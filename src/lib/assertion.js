@@ -1,3 +1,5 @@
+import { getNestedValue } from './utils.js';
+
 // Assertion engine for testing
 
 export function runAssertions(response, assertions) {
@@ -75,27 +77,7 @@ export function runAssertions(response, assertions) {
   return results;
 }
 
-function getNestedValue(obj, path) {
-  const parts = path.split('.');
-  let current = obj;
-  
-  for (const part of parts) {
-    if (current === null || current === undefined) return undefined;
-    
-    // Handle array indexing
-    const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
-    if (arrayMatch) {
-      const [, key, index] = arrayMatch;
-      current = current[key];
-      if (!Array.isArray(current)) return undefined;
-      current = current[parseInt(index)];
-    } else {
-      current = current[part];
-    }
-  }
-  
-  return current;
-}
+// getNestedValue imported from utils.js
 
 function evaluateOperators(actual, expected) {
   for (const [op, value] of Object.entries(expected)) {

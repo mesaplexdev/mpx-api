@@ -1,3 +1,5 @@
+import { getNestedValue } from './utils.js';
+
 // Template variable interpolation
 // Supports: {{varName}}, {{env.VAR}}, {{request-name.response.body.field}}
 
@@ -39,25 +41,4 @@ export function interpolateObject(obj, context = {}) {
   return obj;
 }
 
-function getNestedValue(obj, path) {
-  // Handle array indexing: users[0].name
-  const parts = path.split('.');
-  let current = obj;
-  
-  for (const part of parts) {
-    if (!current) return undefined;
-    
-    // Check for array indexing
-    const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
-    if (arrayMatch) {
-      const [, key, index] = arrayMatch;
-      current = current[key];
-      if (!Array.isArray(current)) return undefined;
-      current = current[parseInt(index)];
-    } else {
-      current = current[part];
-    }
-  }
-  
-  return current;
-}
+// getNestedValue imported from utils.js
