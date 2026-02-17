@@ -1,7 +1,13 @@
 import { request } from 'undici';
 import { CookieJar } from 'tough-cookie';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { getCookieJarPath } from './config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkgVersion = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8')).version;
 
 export class HttpClient {
   constructor(options = {}) {
@@ -40,7 +46,7 @@ export class HttpClient {
     
     // Set default User-Agent, allow override via options.headers
     const defaultHeaders = {
-      'user-agent': 'mpx-api/1.0.1',
+      'user-agent': `mpx-api/${pkgVersion}`,
     };
     
     // Merge headers, with user headers taking precedence
@@ -52,7 +58,18 @@ export class HttpClient {
       body: options.body,
     };
     
-    // Note: undici follows redirects by default, maxRedirections removed in newer versions
+    // Handle redirects
+    if (!this.followRedirects) {
+      requestOptions.maxRedirections = 0;
+    }
+
+    // Handle timeout
+    if (this.timeout) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      requestOptions.signal = controller.signal;
+      requestOptions._timeoutId = timeoutId;
+    }
 
     // Add cookies to request
     const cookies = await this.cookieJar.getCookies(url);
@@ -72,7 +89,10 @@ export class HttpClient {
     }
 
     try {
+      const timeoutId = requestOptions._timeoutId;
+      delete requestOptions._timeoutId;
       const response = await request(url, requestOptions);
+      if (timeoutId) clearTimeout(timeoutId);
       
       // Store cookies from response
       const setCookieHeaders = response.headers['set-cookie'];
@@ -119,7 +139,9 @@ export class HttpClient {
       };
     } catch (err) {
       // Handle network errors gracefully
-      if (err.code === 'ENOTFOUND') {
+      if (err.name === 'AbortError' || err.code === 'UND_ERR_ABORTED') {
+        throw new Error(`Request timeout after ${this.timeout}ms`);
+      } else if (err.code === 'ENOTFOUND') {
         throw new Error(`DNS lookup failed for ${url}`);
       } else if (err.code === 'ECONNREFUSED') {
         throw new Error(`Connection refused to ${url}`);
