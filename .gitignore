@@ -8,3 +8,9 @@ npm-debug.log*
 dist/
 coverage/
 .nyc_output/
+
+# Internal build docs
+*_SUMMARY.md
+BUILD_*.md
+SPRINT_*.md
+*-sprint*.md
