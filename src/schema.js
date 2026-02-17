@@ -253,6 +253,18 @@ export function getSchema() {
         examples: [
           { command: 'mpx-api mcp', description: 'Start MCP stdio server' }
         ]
+      },
+      update: {
+        description: 'Check for updates and optionally install the latest version',
+        usage: 'mpx-api update [--check] [-o json]',
+        flags: {
+          '--check': { description: 'Only check for updates (do not install)', default: false }
+        },
+        examples: [
+          { command: 'mpx-api update', description: 'Check and install updates' },
+          { command: 'mpx-api update --check', description: 'Just check for updates' },
+          { command: 'mpx-api update --check -o json', description: 'Check for updates (JSON output)' }
+        ]
       }
     },
     globalFlags: {
