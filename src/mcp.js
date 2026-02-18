@@ -166,8 +166,7 @@ export async function startMCPServer() {
           type: 'text',
           text: JSON.stringify({ 
             error: err.message,
-            code: err.code || 'ERR_REQUEST',
-            stack: err.stack
+            code: err.code || 'ERR_REQUEST'
           }, null, 2)
         }],
         isError: true
