@@ -185,6 +185,6 @@ try {
     const chalk = (await import('chalk')).default;
     const msg = err.message.startsWith('error:') ? `Error: ${err.message.slice(7)}` : `Error: ${err.message}`;
     console.error(chalk.red(msg));
-    process.exit(1);
+    process.exit(2);
   }
 }
