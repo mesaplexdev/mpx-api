@@ -267,6 +267,10 @@ export function getSchema() {
         ]
       }
     },
+    exitCodes: {
+      0: 'Success',
+      1: 'Error (request failed, validation error, etc.)'
+    },
     globalFlags: {
       '-o, --output': {
         type: 'string',
