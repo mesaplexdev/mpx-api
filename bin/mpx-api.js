@@ -55,6 +55,12 @@ program
   .option('--no-color', 'Disable colored output')
   .option('--schema', 'Output JSON schema describing all commands and flags');
 
+// Error handling — must be set BEFORE .command() so subcommands inherit exitOverride
+program.exitOverride();
+program.configureOutput({
+  writeErr: () => {} // Suppress Commander's own error output; we handle it in the catch below
+});
+
 // Register HTTP method commands (get, post, put, patch, delete, head, options)
 registerRequestCommands(program);
 
@@ -143,7 +149,7 @@ program
       if (jsonMode) {
         console.log(JSON.stringify({ error: err.message, code: 'ERR_UPDATE' }, null, 2));
       } else {
-        console.error(chalk.red.bold('\n❌ Update check failed:'), err.message);
+        console.error(chalk.red('Error:'), err.message);
         console.error('');
       }
       process.exit(1);
@@ -163,4 +169,22 @@ program
     }
   });
 
-program.parse();
+// Error handling
+program.exitOverride();
+program.configureOutput({
+  writeErr: () => {} // Suppress Commander's own error output; we handle it below
+});
+
+try {
+  await program.parseAsync(process.argv);
+} catch (err) {
+  if (err.code === 'commander.version') {
+    process.exit(0);
+  }
+  if (err.code !== 'commander.help' && err.code !== 'commander.helpDisplayed') {
+    const chalk = (await import('chalk')).default;
+    const msg = err.message.startsWith('error:') ? `Error: ${err.message.slice(7)}` : `Error: ${err.message}`;
+    console.error(chalk.red(msg));
+    process.exit(1);
+  }
+}
