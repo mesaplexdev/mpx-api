@@ -32,14 +32,28 @@ if (process.argv.includes('--schema')) {
   process.exit(0);
 }
 
+// Handle --no-color early
+if (process.argv.includes('--no-color') || !process.stdout.isTTY) {
+  process.env.FORCE_COLOR = '0';
+}
+
+// Handle --json as alias for --output json
+if (process.argv.includes('--json') && !process.argv.includes('--output')) {
+  const idx = process.argv.indexOf('--json');
+  process.argv.splice(idx, 1, '--output', 'json');
+}
+
 program
   .name('mpx-api')
   .description('Developer-first API testing, mocking, and documentation CLI')
   .version(pkg.version)
   .enablePositionalOptions()
   .passThroughOptions()
+  .option('--json', 'Output as JSON (machine-readable)')
   .option('-o, --output <format>', 'Output format: json for structured JSON (machine-readable)')
-  .option('-q, --quiet', 'Suppress non-essential output');
+  .option('-q, --quiet', 'Suppress non-essential output')
+  .option('--no-color', 'Disable colored output')
+  .option('--schema', 'Output JSON schema describing all commands and flags');
 
 // Register HTTP method commands (get, post, put, patch, delete, head, options)
 registerRequestCommands(program);
