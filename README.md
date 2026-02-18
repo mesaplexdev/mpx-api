@@ -4,18 +4,23 @@
 
 No GUI. No proprietary formats. Just powerful, git-friendly API testing from your terminal.
 
+Part of the [Mesaplex](https://mesaplex.com) developer toolchain.
+
 [![npm version](https://img.shields.io/npm/v/mpx-api.svg)](https://www.npmjs.com/package/mpx-api)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: Dual](https://img.shields.io/badge/license-Dual-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 
-## Why mpx-api?
+## Features
 
-- **Git-friendly**: Collections are YAML files, not proprietary blobs
-- **CI/CD ready**: Exit codes, JSON output, no GUI dependency
-- **Developer experience**: Beautiful terminal output, syntax highlighting
-- **Request chaining**: Use response from one request in another (`{{request.response.body.id}}`)
-- **Built-in mock server**: Test against OpenAPI specs without deploying
-- **Assertions in collections**: No separate test code needed
-- **Fast**: Pure Node.js, minimal dependencies, < 200ms startup
+- **Git-friendly** — Collections are YAML files, not proprietary blobs
+- **CI/CD ready** — Exit codes, JSON output, no GUI dependency
+- **Beautiful terminal output** with syntax highlighting
+- **Request chaining** — Use response data from one request in another
+- **Built-in mock server** — Test against OpenAPI specs without deploying (Pro)
+- **Load testing** — RPS control, percentile reporting (Pro)
+- **Doc generation** — Generate API docs from collections (Pro)
+- **MCP server** — Integrates with any MCP-compatible AI agent
+- **Self-documenting** — `--schema` returns machine-readable tool description
 
 ## Installation
 
@@ -23,27 +28,26 @@ No GUI. No proprietary formats. Just powerful, git-friendly API testing from you
 npm install -g mpx-api
 ```
 
-Or use with `npx`:
+Or run directly with npx:
 
 ```bash
 npx mpx-api get https://api.github.com/users/octocat
 ```
 
-## Quick Start
+**Requirements:** Node.js 18+ · No native dependencies · macOS, Linux, Windows
 
-### Make HTTP Requests
+## Quick Start
 
 ```bash
 # Simple GET request
 mpx-api get https://jsonplaceholder.typicode.com/users
 
 # POST with JSON
-mpx-api post https://api.example.com/users --json '{"name":"Alice","email":"alice@example.com"}'
+mpx-api post https://api.example.com/users --json '{"name":"Alice"}'
 
 # Custom headers
 mpx-api get https://api.example.com/protected \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Accept: application/json"
+  -H "Authorization: Bearer $TOKEN"
 
 # Verbose output (show headers)
 mpx-api get https://httpbin.org/get -v
@@ -52,7 +56,22 @@ mpx-api get https://httpbin.org/get -v
 mpx-api get https://api.example.com/data -q
 ```
 
-### Create a Collection
+## Usage
+
+### HTTP Requests
+
+Supports `get`, `post`, `put`, `patch`, `delete`, `head`, and `options`:
+
+```bash
+mpx-api get https://api.example.com/users
+mpx-api post https://api.example.com/users --json '{"name":"Bob"}'
+mpx-api put https://api.example.com/users/1 --json '{"name":"Alice"}'
+mpx-api delete https://api.example.com/users/1
+```
+
+### Collections
+
+Collections are YAML files for repeatable API test suites:
 
 ```bash
 # Initialize collection in your project
@@ -66,9 +85,7 @@ mpx-api collection add create-user POST /users --json '{"name":"Bob"}'
 mpx-api collection run
 ```
 
-### Collection File Format
-
-Collections are simple YAML files (`.mpx-api/collection.yaml`):
+Collection file format (`.mpx-api/collection.yaml`):
 
 ```yaml
 name: My API Tests
@@ -90,111 +107,67 @@ requests:
     url: /users/{{get-users.response.body[0].id}}
     assert:
       status: 200
-      body.email: { exists: true }
-
-  - name: create-post
-    method: POST
-    url: /posts
-    json:
-      title: New Post
-      userId: {{get-users.response.body[0].id}}
-    assert:
-      status: 201
-      body.title: New Post
 ```
 
-**Key features:**
-
-- **Request chaining**: `{{get-users.response.body[0].id}}` uses the response from a previous request
-- **Environment variables**: `{{env.API_TOKEN}}` pulls from environment files
-- **Assertions**: Test status codes, response times, body fields, headers
-- **Operators**: `gt`, `lt`, `gte`, `lte`, `eq`, `ne`, `contains`, `exists`
+Features: request chaining (`{{request.response.body.id}}`), environment variables (`{{env.VAR}}`), built-in assertions.
 
 ### Environments
 
 ```bash
-# Initialize environments (creates dev, staging, production)
-mpx-api env init
-
-# Set variables
-mpx-api env set staging API_URL=https://staging.example.com
-mpx-api env set staging API_TOKEN=abc123
-
-# List environments
-mpx-api env list
-
-# List variables in environment
-mpx-api env list staging
-
-# Run collection with environment
-mpx-api collection run --env staging
-```
-
-Environment files (`.mpx-api/environments/staging.yaml`):
-
-```yaml
-name: staging
-variables:
-  API_URL: https://staging.example.com
-  API_TOKEN: secret-token-here
+mpx-api env init                              # Create dev, staging, production
+mpx-api env set staging API_URL=https://...   # Set variables
+mpx-api env list                              # List environments
+mpx-api collection run --env staging          # Run with environment
 ```
 
 ### Testing & Assertions
 
 ```bash
-# Run tests from collection
 mpx-api test ./collection.yaml
-
-# With environment
 mpx-api test ./collection.yaml --env production
-
-# JSON output for CI/CD
 mpx-api test ./collection.yaml --json
 ```
 
-Assertions support:
-
-- **Status codes**: `status: 200`
-- **Response time**: `responseTime: { lt: 500 }`
-- **Headers**: `headers.content-type: application/json`
-- **Body fields**: `body.users[0].name: Alice`
-- **Operators**:
-  - `{ gt: 10 }` - greater than
-  - `{ lt: 100 }` - less than
-  - `{ gte: 5 }` - greater than or equal
-  - `{ lte: 50 }` - less than or equal
-  - `{ eq: "value" }` - equals
-  - `{ ne: "value" }` - not equals
-  - `{ contains: "text" }` - contains substring
-  - `{ exists: true }` - field exists
+Assertion operators: `gt`, `lt`, `gte`, `lte`, `eq`, `ne`, `contains`, `exists`
 
 ### Request History
 
 ```bash
-# View recent requests
-mpx-api history
-
-# Limit to last 50
-mpx-api history -n 50
+mpx-api history         # View recent requests
+mpx-api history -n 50   # Last 50
 ```
 
-### Cookie Management
+### Mock Server (Pro)
 
-Cookies are automatically saved and sent with subsequent requests. Cookie jar is stored at `~/.mpx-api/cookies.json`.
+```bash
+mpx-api mock ./openapi.yaml --port 4000
+```
 
-## AI Agent Usage 🤖
+### Load Testing (Pro)
 
-**mpx-api is AI-native!** Every command supports structured JSON output, schema discovery, and MCP (Model Context Protocol) integration for seamless AI agent automation.
+```bash
+mpx-api load https://api.example.com/health --rps 100 --duration 30s
+```
+
+### Documentation Generation (Pro)
+
+```bash
+mpx-api docs ./collection.yaml --output API.md
+```
+
+## AI Agent Usage
+
+mpx-api is designed to be used by AI agents as well as humans.
 
 ### JSON Output
 
-Add `--json` to any command for machine-readable output:
+Add `--json` to any command for structured, machine-readable output:
 
 ```bash
-# HTTP request with JSON output
 mpx-api get https://api.github.com/users/octocat --json
+```
 
-# Output structure
+```json
 {
   "request": {
     "method": "GET",
@@ -206,8 +179,7 @@ mpx-api get https://api.github.com/users/octocat --json
     "status": 200,
     "statusText": "OK",
     "headers": { "content-type": "application/json" },
-    "body": { "login": "octocat", ... },
-    "rawBody": "...",
+    "body": { "login": "octocat" },
     "responseTime": 145,
     "size": 1234
   }
@@ -216,30 +188,15 @@ mpx-api get https://api.github.com/users/octocat --json
 
 ### Schema Discovery
 
-AI agents can discover all available commands, flags, and output formats:
-
 ```bash
 mpx-api --schema
 ```
 
-Returns a complete JSON schema describing:
-- All commands and subcommands
-- Available flags and their types
-- Input/output schemas
-- Usage examples
-- Exit codes
+Returns a complete JSON schema describing all commands, flags, inputs, outputs, and examples.
 
-Perfect for dynamic tool discovery by AI assistants!
+### MCP Integration
 
-### MCP Server Mode
-
-Start mpx-api as an MCP (Model Context Protocol) server for AI agent integration:
-
-```bash
-mpx-api mcp
-```
-
-Add to your MCP client configuration (e.g., Claude Desktop, Cline):
+Add to your MCP client configuration (Claude Desktop, Cursor, Windsurf, etc.):
 
 ```json
 {
@@ -252,222 +209,65 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cline):
 }
 ```
 
-**Available MCP tools:**
-
-- `http_request` - Send HTTP requests with full control over method, headers, body
-- `get_schema` - Get the complete tool schema for dynamic discovery
-
-**Example MCP usage:**
-
-AI agents can now make API requests on your behalf:
-- "Make a GET request to https://api.github.com/users/octocat"
-- "POST to https://api.example.com/users with JSON body {name: 'Alice'}"
-- "What commands does mpx-api support?" (via get_schema)
-
-### Quiet Mode
-
-Suppress non-essential output with `--quiet` or `-q`:
-
-```bash
-mpx-api get https://api.example.com/data --quiet --json
-```
-
-Perfect for scripting and automation where you only want the result data.
-
-### Composability
-
-All commands are designed for Unix-style composition:
-
-```bash
-# Pipe output to jq
-mpx-api get https://api.github.com/users/octocat --json | jq '.response.body.login'
-
-# Use in scripts
-STATUS=$(mpx-api get https://api.example.com/health --json | jq -r '.response.status')
-if [ "$STATUS" -eq 200 ]; then
-  echo "API is healthy"
-fi
-
-# Batch processing
-cat urls.txt | while read url; do
-  mpx-api get "$url" --json >> results.jsonl
-done
-```
+The MCP server exposes these tools:
+- **`http_request`** — Send HTTP requests with full control over method, headers, body
+- **`get_schema`** — Get the complete tool schema for dynamic discovery
 
 ### Exit Codes
 
-Predictable exit codes for automation:
+| Code | Meaning |
+|------|---------|
+| 0 | Success (2xx or 3xx HTTP status) |
+| 1 | Request failed or 4xx/5xx HTTP status |
 
-- `0` - Success (2xx or 3xx HTTP status)
-- `1` - Request failed or 4xx/5xx HTTP status
+### Automation Tips
 
-```bash
-# Check if request succeeded
-if mpx-api get https://api.example.com/endpoint --quiet; then
-  echo "Success!"
-else
-  echo "Request failed"
-fi
-```
-
-## Pro Features 💎
-
-Upgrade to **mpx-api Pro** ($12/mo) for advanced features:
-
-### Mock Server
-
-Start a mock API server from an OpenAPI spec:
-
-```bash
-mpx-api mock ./openapi.yaml --port 4000
-```
-
-Supports:
-- OpenAPI 3.0 specs (YAML or JSON)
-- Automatic response generation from schemas
-- Configurable response delay: `--delay 200`
-- CORS support: `--cors`
-
-### Load Testing
-
-```bash
-mpx-api load https://api.example.com/health --rps 100 --duration 30s
-```
-
-Features:
-- Requests per second (RPS) control
-- Response time percentiles (P50, P95, P99)
-- Status code distribution
-- Error tracking
-
-### Documentation Generation
-
-Generate beautiful API docs from your collections:
-
-```bash
-mpx-api docs ./collection.yaml --output API.md
-```
-
-Creates Markdown documentation with:
-- Table of contents
-- Request/response examples
-- Expected responses from assertions
-- Auto-generated from your test collections
-
-### Request Chaining
-
-Already included in free tier! Use response data from previous requests:
-
-```yaml
-requests:
-  - name: login
-    method: POST
-    url: /auth/login
-    json:
-      username: test
-      password: secret
-
-  - name: get-profile
-    method: GET
-    url: /users/me
-    headers:
-      Authorization: Bearer {{login.response.body.token}}
-```
-
-## Examples
-
-See the `examples/` directory for real-world collections:
-
-- `jsonplaceholder.yaml` - CRUD operations with JSONPlaceholder API
-- `github-api.yaml` - GitHub API with request chaining
-- `openapi-petstore.yaml` - OpenAPI spec for mock server testing
-
-Run examples:
-
-```bash
-mpx-api test examples/jsonplaceholder.yaml
-mpx-api collection run examples/github-api.yaml
-```
+- Use `--json` for machine-parseable output
+- Use `--quiet` to suppress banners and progress info
+- Pipe output to `jq` for filtering
+- Check exit codes for pass/fail in CI/CD
 
 ## CI/CD Integration
 
-Use exit codes for CI/CD pipelines:
-
-```bash
-# In your CI script
-mpx-api test ./api-tests.yaml --env production
-
-# Exit code 0 = all tests passed
-# Exit code 1 = tests failed
-```
-
-GitHub Actions example:
-
 ```yaml
+# .github/workflows/api-tests.yml
 - name: Run API Tests
   run: npx mpx-api test ./tests/api-collection.yaml --env staging
 ```
 
-## Error Handling
+## Free vs Pro
 
-mpx-api gracefully handles:
+| Feature | Free | Pro |
+|---------|------|-----|
+| HTTP requests | ✅ | ✅ |
+| Collections & chaining | ✅ | ✅ |
+| Environments | ✅ | ✅ |
+| Assertions & testing | ✅ | ✅ |
+| JSON output | ✅ | ✅ |
+| MCP server | ✅ | ✅ |
+| Mock server | ❌ | ✅ |
+| Load testing | ❌ | ✅ |
+| Doc generation | ❌ | ✅ |
 
-- **DNS failures**: Clear error messages
-- **Timeouts**: Configurable with `--timeout <ms>`
-- **SSL errors**: Skip verification with `--no-verify`
-- **Invalid JSON**: Parse errors with helpful messages
-- **Large responses**: Automatic truncation in terminal (full body still accessible)
-
-## Configuration
-
-Global config: `~/.mpx-api/config.json`  
-Project config: `.mpx-api/config.json`  
-Cookie jar: `~/.mpx-api/cookies.json`  
-History: `~/.mpx-api/history.jsonl`
-
-## Comparison
-
-| Feature | mpx-api | Postman | HTTPie Pro | curl |
-|---------|---------|---------|------------|------|
-| **Price** | Free / $12 Pro | $49/user | $9/mo | Free |
-| **Collections** | ✅ YAML files | ✅ Proprietary | ❌ | ❌ |
-| **Request chaining** | ✅ | ✅ | ❌ | ❌ |
-| **Assertions** | ✅ Built-in | ✅ Scripts | ❌ | ❌ |
-| **Mock server** | ✅ Pro | ✅ Pro | ❌ | ❌ |
-| **Load testing** | ✅ Pro | ✅ Pro | ❌ | ❌ |
-| **Git-friendly** | ✅ | ⚠️ Export needed | N/A | N/A |
-| **No GUI needed** | ✅ | ❌ | ✅ | ✅ |
-| **Syntax highlighting** | ✅ | ✅ | ✅ | ❌ |
-
-## Development
-
-```bash
-# Clone and install
-git clone https://github.com/mesaplex/mpx-api.git
-cd mpx-api
-npm install
-
-# Run tests
-npm test
-
-# Link for local development
-npm link
-```
-
-## Contributing
-
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+**Upgrade to Pro:** [https://mesaplex.com/mpx-api](https://mesaplex.com/mpx-api)
 
 ## License
 
-MIT © Mesaplex
+Dual License — Free tier for personal use, Pro license for commercial use and advanced features. See [LICENSE](LICENSE) for full terms.
 
-## Support
+## Links
 
-- **Issues**: [GitHub Issues](https://github.com/mesaplex/mpx-api/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/mesaplex/mpx-api/discussions)
-- **Email**: support@mpx-api.dev
+- **Website:** [https://mesaplex.com](https://mesaplex.com)
+- **npm:** [https://www.npmjs.com/package/mpx-api](https://www.npmjs.com/package/mpx-api)
+- **GitHub:** [https://github.com/mesaplexdev/mpx-api](https://github.com/mesaplexdev/mpx-api)
+- **Support:** support@mesaplex.com
+
+### Related Tools
+
+- **[mpx-scan](https://www.npmjs.com/package/mpx-scan)** — Website security scanner
+- **[mpx-db](https://www.npmjs.com/package/mpx-db)** — Database management CLI
+- **[mpx-secrets-audit](https://www.npmjs.com/package/mpx-secrets-audit)** — Secret lifecycle tracking and audit
 
 ---
 
-**Built with ❤️ by developers, for developers.**
+**Made with ❤️ by [Mesaplex](https://mesaplex.com)**
