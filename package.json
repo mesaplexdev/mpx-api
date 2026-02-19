@@ -1,6 +1,6 @@
 {
   "name": "mpx-api",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "API testing, mocking, and documentation CLI. Developer-first HTTP workflows. AI-native with JSON output and MCP server.",
   "main": "src/index.js",
   "bin": {
