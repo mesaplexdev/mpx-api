@@ -126,6 +126,7 @@ mpx-api collection run --env staging          # Run with environment
 mpx-api test ./collection.yaml
 mpx-api test ./collection.yaml --env production
 mpx-api test ./collection.yaml --json
+mpx-api test ./collection.yaml --pdf report.pdf    # Export PDF report
 ```
 
 Assertion operators: `gt`, `lt`, `gte`, `lte`, `eq`, `ne`, `contains`, `exists`

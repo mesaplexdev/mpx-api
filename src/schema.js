@@ -160,7 +160,8 @@ export function getSchema() {
             flags: {
               '-e, --env': { type: 'string', description: 'Environment name to use' },
               '--base-url': { type: 'string', description: 'Override base URL' },
-              '--json': { type: 'boolean', description: 'Output results as JSON' }
+              '--json': { type: 'boolean', description: 'Output results as JSON' },
+              '--pdf': { type: 'string', description: 'Export results as a PDF report to the specified file' }
             }
           },
           list: {
@@ -212,7 +213,8 @@ export function getSchema() {
         },
         flags: {
           '-e, --env': { type: 'string', description: 'Environment name' },
-          '--json': { type: 'boolean', description: 'Output results as JSON' }
+          '--json': { type: 'boolean', description: 'Output results as JSON' },
+          '--pdf': { type: 'string', description: 'Export results as a PDF report to the specified file' }
         }
       },
       history: {

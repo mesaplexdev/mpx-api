@@ -58,19 +58,10 @@ test('HttpClient - DNS error handling', async () => {
 });
 
 test('HttpClient - Timeout error handling', async () => {
-  const client = new HttpClient({ timeout: 100 });
+  const client = new HttpClient({ timeout: 500 });
   
-  try {
-    await client.get('https://httpbin.org/delay/5');
-    assert.fail('Should have thrown timeout error');
-  } catch (err) {
-    // Accept either timeout or connection reset errors
-    assert.ok(
-      err.message.includes('timeout') || 
-      err.message.includes('timed out') ||
-      err.code === 'UND_ERR_HEADERS_TIMEOUT' ||
-      err.code === 'UND_ERR_BODY_TIMEOUT',
-      `Expected timeout error but got: ${err.message}`
-    );
-  }
+  await assert.rejects(
+    async () => await client.get('https://httpbin.org/delay/5'),
+    /timeout/i
+  );
 });

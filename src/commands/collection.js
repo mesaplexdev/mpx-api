@@ -1,9 +1,8 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { parse, stringify } from 'yaml';
 import { ensureLocalDir } from '../lib/config.js';
-import { formatSuccess, formatError, formatInfo, formatWarning } from '../lib/output.js';
+import { formatSuccess, formatError, formatInfo, formatWarning, formatTestResults } from '../lib/output.js';
 import { runCollection } from '../lib/collection-runner.js';
-import { formatTestResults } from '../lib/output.js';
 import { join } from 'path';
 
 export function registerCollectionCommands(program) {
@@ -96,6 +95,7 @@ export function registerCollectionCommands(program) {
     .option('-e, --env <name>', 'Environment to use')
     .option('--base-url <url>', 'Override base URL')
     .option('--json', 'Output results as JSON')
+    .option('--pdf <filename>', 'Export results as a PDF report')
     .action(async (file, options, command) => {
       try {
         const collectionPath = file || join('.mpx-api', 'collection.yaml');
@@ -122,7 +122,21 @@ export function registerCollectionCommands(program) {
         
         const baseUrl = options.baseUrl || collection.baseUrl || '';
         
+        const startTime = Date.now();
         const results = await runCollection(collection, { env, baseUrl });
+        const totalTime = Date.now() - startTime;
+        
+        // Generate PDF if requested
+        if (options.pdf) {
+          const { generatePDFReport } = await import('../lib/pdf-report.js');
+          const pdfPath = options.pdf.endsWith('.pdf') ? options.pdf : `${options.pdf}.pdf`;
+          await generatePDFReport(results, {
+            target: baseUrl || collection.baseUrl || 'API Tests',
+            collectionName: collection.name,
+            totalTime,
+          }, pdfPath);
+          formatSuccess(`PDF report saved to ${pdfPath}`);
+        }
         
         const globalOpts = command.optsWithGlobals();
         const jsonOutput = options.json || globalOpts.output === 'json';

@@ -63,12 +63,10 @@ export class HttpClient {
       requestOptions.maxRedirections = 0;
     }
 
-    // Handle timeout
+    // Handle timeout via undici's built-in options
     if (this.timeout) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-      requestOptions.signal = controller.signal;
-      requestOptions._timeoutId = timeoutId;
+      requestOptions.headersTimeout = this.timeout;
+      requestOptions.bodyTimeout = this.timeout;
     }
 
     // Add cookies to request
@@ -89,10 +87,7 @@ export class HttpClient {
     }
 
     try {
-      const timeoutId = requestOptions._timeoutId;
-      delete requestOptions._timeoutId;
       const response = await request(url, requestOptions);
-      if (timeoutId) clearTimeout(timeoutId);
       
       // Store cookies from response
       const setCookieHeaders = response.headers['set-cookie'];
@@ -139,7 +134,7 @@ export class HttpClient {
       };
     } catch (err) {
       // Handle network errors gracefully
-      if (err.name === 'AbortError' || err.code === 'UND_ERR_ABORTED') {
+      if (err.name === 'AbortError' || err.code === 'UND_ERR_ABORTED' || err.code === 'UND_ERR_HEADERS_TIMEOUT' || err.code === 'UND_ERR_BODY_TIMEOUT') {
         throw new Error(`Request timeout after ${this.timeout}ms`);
       } else if (err.code === 'ENOTFOUND') {
         throw new Error(`DNS lookup failed for ${url}`);

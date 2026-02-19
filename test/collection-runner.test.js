@@ -1,6 +1,12 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert';
+import { getGlobalDispatcher } from 'undici';
 import { runCollection } from '../src/lib/collection-runner.js';
+
+// Close undici connection pool after all tests to prevent hang
+after(async () => {
+  await getGlobalDispatcher().close();
+});
 
 test('collection-runner - simple GET request', async () => {
   const collection = {
